@@ -1,0 +1,183 @@
+require("lazy").setup({
+    { "mg979/vim-visual-multi", branch = "master", event = "VeryLazy" },
+    -- Color schemes
+    {"rebelot/kanagawa.nvim", priority = 1000, lazy = false},
+    {"EdenEast/nightfox.nvim", lazy = true},
+    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {}, event = "BufReadPost" },
+
+    {"catppuccin/nvim", name = "catppuccin", priority = 1000, lazy = true}, -- File explorer
+    {
+        "nvim-neo-tree/neo-tree.nvim",
+        branch = "v3.x",
+        dependencies = {
+            "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons", -- optional but recommended
+            "MunifTanjim/nui.nvim"
+        },
+        config = function()
+            require("neo-tree").setup({
+                close_if_last_window = true,
+                popup_border_style = "rounded",
+                enable_git_status = true,
+                enable_diagnostics = true,
+                window = {
+                    position = "left",
+                    width = 45,
+                    mappings = {
+                        ["<space>"] = "toggle_node",
+                        ["<cr>"] = "open",
+                        ["s"] = "open_vsplit",
+                        ["S"] = "open_split",
+                        ["<C-x>"] = "open_split",
+                        ["<C-v>"] = "open_vsplit",
+                        ["<C-t>"] = "open_tabnew"
+                    }
+                },
+                filesystem = {
+                    filtered_items = {
+                        hide_dotfiles = false,
+                        hide_gitignored = false,
+                        never_show = {".DS_Store", "thumbs.db"}
+                    }
+                },
+                buffers = {
+                  show_unloaded = true,
+                  follow_current_file = {
+                    enabled = true,
+                  },
+                  window = {
+                    mappings = {
+                      ["d"] = "delete", -- normal delete mapping
+                    },
+                  },
+                },
+                event_handlers = {
+                  {
+                    event = "file_opened",
+                    handler = function(file_path)
+                      -- Make buffer modifiable just in case
+                      vim.cmd("setlocal modifiable")
+                    end,
+                  },
+                },
+                git_status = {
+                    symbols = {
+                        added = "✚",
+                        modified = "",
+                        deleted = "✖",
+                        renamed = "➜",
+                        untracked = "★",
+                        ignored = "◌",
+                        unstaged = "✗",
+                        staged = "✓",
+                        conflict = ""
+                    }
+                }
+            })
+
+            -- Optional: disable netrw and hijack directory opening
+            vim.cmd([[ let g:loaded_netrw = 1 ]])
+            vim.cmd([[ let g:loaded_netrwPlugin = 1 ]])
+
+            -- Keybinding to toggle Neo-tree
+            vim.keymap.set("n", "<C-b>", ":Neotree toggle<CR>",
+                           {silent = true, noremap = true})
+        end
+    }, -- { "nvim-tree/nvim-tree.lua" },
+    -- { "nvim-tree/nvim-web-devicons" },
+    -- LuaLine
+    {
+        "nvim-lualine/lualine.nvim",
+        dependencies = {"nvim-tree/nvim-web-devicons"},
+        event = "VeryLazy",
+        config = function()
+            require("lualine").setup({
+                options = {
+                    theme = "catppuccin", -- or whatever your theme is
+                    icons_enabled = true,
+                    section_separators = {left = "", right = ""},
+                    component_separators = "|"
+                },
+                sections = {
+                    lualine_a = {"mode"}, -- e.g. NORMAL
+                    lualine_b = {"hostname", "branch"},
+                    lualine_c = {
+                        {"filename", path = 1} -- shows folder/file path
+                    },
+                    lualine_x = {
+                        {
+                            function()
+                                return " " ..
+                                           vim.fn
+                                               .matchstr(
+                                               vim.fn.system("node -v"),
+                                               "v[0-9.]*")
+                            end,
+                            icon = "",
+                            color = {fg = "#6cc644"}
+                        }, "encoding", "fileformat", "filetype",
+                        {
+                            function()
+                                return " " .. os.date("%H:%M")
+                            end,
+                            color = {fg = "#ff9ead"}
+                        }
+
+                    },
+                    lualine_y = {
+                        {"progress"} -- % through file
+                    },
+                    lualine_z = {
+                        {"location"} -- line & column
+                    }
+                }
+            })
+        end
+    }, -- LSP and completion
+    {"neovim/nvim-lspconfig"}, {"williamboman/mason.nvim"},
+    {"williamboman/mason-lspconfig.nvim"}, {"hrsh7th/nvim-cmp"},
+    {"hrsh7th/cmp-nvim-lsp"}, {"L3MON4D3/LuaSnip"},
+    {"saadparwaiz1/cmp_luasnip"}, -- Formatter & Linter
+    { "rafamadriz/friendly-snippets" },
+    { "hrsh7th/cmp-buffer" },{ "hrsh7th/cmp-path" },
+    {"nvimtools/none-ls.nvim"}, {"nvimtools/none-ls-extras.nvim"},
+
+    -- Syntax highlighting
+    {"nvim-treesitter/nvim-treesitter", build = ":TSUpdate"},
+    { "windwp/nvim-ts-autotag" },
+
+    -- Telescope (fuzzy finder)
+    {
+        "nvim-telescope/telescope.nvim",
+        tag = "0.1.5",
+        dependencies = {"nvim-lua/plenary.nvim"},
+        config = function()
+            require("telescope").setup({
+                defaults = {
+                    layout_config = {horizontal = {preview_width = 0.5}},
+                    sorting_strategy = "ascending",
+                    layout_strategy = "horizontal",
+                    prompt_prefix = "🔍 ",
+                    selection_caret = " "
+                }
+            })
+        end
+    },
+    -- Auto-close & auto-rename tag
+    {"windwp/nvim-autopairs"}, {"windwp/nvim-ts-autotag"},
+
+    -- Prettier and eslint
+    {"MunifTanjim/prettier.nvim"},
+
+    -- Commenter
+    {
+      "numToStr/Comment.nvim",
+      config = function()
+        require("Comment").setup()
+      end
+    },
+    -- Auto tag closer
+    { "windwp/nvim-ts-autotag" }
+
+
+
+})
