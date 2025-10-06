@@ -225,8 +225,133 @@ require("lazy").setup({
         require("Comment").setup()
       end
     },
-    -- Auto tag closer (duplicate removed)
 
+    -- Essential plugins
+    {
+      "folke/which-key.nvim",
+      event = "VeryLazy",
+      config = function()
+        require("config.which-key")
+      end
+    },
+    {
+      "lewis6991/gitsigns.nvim",
+      event = {"BufReadPre", "BufNewFile"},
+      config = function()
+        require("config.gitsigns")
+      end
+    },
+    {
+      "folke/trouble.nvim",
+      cmd = "Trouble",
+      keys = {
+        {"<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)"},
+        {"<leader>xd", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics (Trouble)"},
+        {"<leader>xl", "<cmd>Trouble loclist toggle<cr>", desc = "Location List (Trouble)"},
+        {"<leader>xq", "<cmd>Trouble qflist toggle<cr>", desc = "Quickfix List (Trouble)"},
+      },
+      config = function()
+        require("trouble").setup()
+      end
+    },
+
+    -- Quality of life
+    {"tpope/vim-surround", event = "VeryLazy"},
+    {
+      "ThePrimeagen/harpoon",
+      branch = "harpoon2",
+      dependencies = {"nvim-lua/plenary.nvim"},
+      keys = {
+        {"<leader>a", function() require("harpoon"):list():add() end, desc = "Harpoon add file"},
+        {"<C-e>", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, desc = "Harpoon menu"},
+        {"<C-h>", function() require("harpoon"):list():select(1) end, desc = "Harpoon file 1"},
+        {"<C-j>", function() require("harpoon"):list():select(2) end, desc = "Harpoon file 2"},
+        {"<C-k>", function() require("harpoon"):list():select(3) end, desc = "Harpoon file 3"},
+        {"<C-l>", function() require("harpoon"):list():select(4) end, desc = "Harpoon file 4"},
+      },
+      config = function()
+        require("harpoon"):setup()
+      end
+    },
+    {
+      "nvim-telescope/telescope-fzf-native.nvim",
+      build = "make",
+      config = function()
+        require("telescope").load_extension("fzf")
+      end
+    },
+    {
+      "folke/flash.nvim",
+      event = "VeryLazy",
+      keys = {
+        {"s", mode = {"n", "x", "o"}, function() require("flash").jump() end, desc = "Flash"},
+        {"S", mode = {"n", "x", "o"}, function() require("flash").treesitter() end, desc = "Flash Treesitter"},
+      },
+      config = function()
+        require("flash").setup()
+      end
+    },
+
+    -- Nice to have
+    {
+      "folke/todo-comments.nvim",
+      dependencies = {"nvim-lua/plenary.nvim"},
+      event = {"BufReadPost", "BufNewFile"},
+      config = function()
+        require("todo-comments").setup()
+      end
+    },
+    {
+      "numToStr/Navigator.nvim",
+      keys = {
+        {"<C-Left>", "<cmd>NavigatorLeft<cr>", desc = "Navigate Left"},
+        {"<C-Right>", "<cmd>NavigatorRight<cr>", desc = "Navigate Right"},
+        {"<C-Up>", "<cmd>NavigatorUp<cr>", desc = "Navigate Up"},
+        {"<C-Down>", "<cmd>NavigatorDown<cr>", desc = "Navigate Down"},
+      },
+      config = function()
+        require("Navigator").setup()
+      end
+    },
+    {
+      "stevearc/oil.nvim",
+      cmd = "Oil",
+      keys = {
+        {"-", "<cmd>Oil<cr>", desc = "Open parent directory"},
+      },
+      config = function()
+        require("oil").setup()
+      end
+    },
+    {
+      "nvim-pack/nvim-spectre",
+      dependencies = {"nvim-lua/plenary.nvim"},
+      keys = {
+        {"<leader>S", function() require("spectre").toggle() end, desc = "Toggle Spectre"},
+        {"<leader>sw", function() require("spectre").open_visual({select_word=true}) end, desc = "Search current word"},
+        {"<leader>sp", function() require("spectre").open_file_search({select_word=true}) end, desc = "Search in current file"},
+      },
+      config = function()
+        require("spectre").setup()
+      end
+    },
+
+    -- Stack-specific plugins
+    {
+      "echasnovski/mini.ai",
+      event = "VeryLazy",
+      config = function()
+        require("mini.ai").setup()
+      end
+    },
+    {
+      "nvim-treesitter/nvim-treesitter-textobjects",
+      dependencies = {"nvim-treesitter/nvim-treesitter"},
+      event = {"BufReadPost", "BufNewFile"},
+      config = function()
+        require("config.treesitter-textobjects")
+      end
+    },
 
 
 })
