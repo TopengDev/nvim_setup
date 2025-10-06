@@ -35,15 +35,8 @@ null_ls.setup({
   log_level = "warn",
   sources = sources,
   on_attach = function(client, bufnr)
-    if client.supports_method("textDocument/formatting") then
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        buffer = bufnr,
-        callback = function()
-          -- Use synchronous formatting with timeout for better performance
-          vim.lsp.buf.format({ async = false, timeout_ms = 2000 })
-        end
-      })
-    end
+    -- Format on save disabled to prevent performance issues
+    -- To manually format, use :lua vim.lsp.buf.format()
   end
 })
 

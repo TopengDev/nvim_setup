@@ -1,3 +1,6 @@
+
+
+
 -- Performance optimizations
 vim.g.loaded_gzip = 1
 vim.g.loaded_zip = 1
@@ -36,6 +39,21 @@ end, { desc = "Pick Colorscheme (live preview)" })
 
 
 vim.cmd.colorscheme("kanagawa")
+
+
+-- Transparent background
+vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
+vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
+vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })
+
+-- Transparent line number background
+vim.api.nvim_set_hl(0, "LineNr", { bg = "none" })
+vim.api.nvim_set_hl(0, "CursorLineNr", { bg = "none" })
+vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
+vim.api.nvim_set_hl(0, "FoldColumn", { bg = "none" })
+
 
 -- Show absolute line numbers
 vim.wo.number = true
@@ -84,13 +102,13 @@ vim.keymap.set("i", "<S-A-Down>", "<Esc>yypgi", { noremap = true, silent = true 
 vim.o.expandtab = true
 
 -- Number of spaces a <Tab> counts for
-vim.o.tabstop = 3
+vim.o.tabstop = 2
 
 -- Number of spaces for auto-indent (e.g., pressing Enter)
-vim.o.shiftwidth = 3
+vim.o.shiftwidth = 2
 
 -- Use `shiftwidth` when pressing tab in insert mode
-vim.o.softtabstop = 3
+vim.o.softtabstop = 2
 
 -- Error popup on hover
 vim.o.updatetime = 500

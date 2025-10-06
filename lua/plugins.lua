@@ -107,54 +107,55 @@ require("lazy").setup({
     }, -- { "nvim-tree/nvim-tree.lua" },
     -- { "nvim-tree/nvim-web-devicons" },
     -- LuaLine
-    {
-        "nvim-lualine/lualine.nvim",
-        dependencies = {"nvim-tree/nvim-web-devicons"},
-        event = "VeryLazy",
-        config = function()
-            require("lualine").setup({
-                options = {
-                    theme = "catppuccin", -- or whatever your theme is
-                    icons_enabled = true,
-                    section_separators = {left = "", right = ""},
-                    component_separators = "|"
-                },
-                sections = {
-                    lualine_a = {"mode"}, -- e.g. NORMAL
-                    lualine_b = {"hostname", "branch"},
-                    lualine_c = {
-                        {"filename", path = 1} -- shows folder/file path
-                    },
-                    lualine_x = {
-                        {
-                            function()
-                                return " " ..
-                                           vim.fn
-                                               .matchstr(
-                                               vim.fn.system("node -v"),
-                                               "v[0-9.]*")
-                            end,
-                            icon = "",
-                            color = {fg = "#6cc644"}
-                        }, "encoding", "fileformat", "filetype",
-                        {
-                            function()
-                                return " " .. os.date("%H:%M")
-                            end,
-                            color = {fg = "#ff9ead"}
-                        }
-
-                    },
-                    lualine_y = {
-                        {"progress"} -- % through file
-                    },
-                    lualine_z = {
-                        {"location"} -- line & column
-                    }
-                }
-            })
-        end
-    }, -- LSP and completion
+    -- {
+    --     "nvim-lualine/lualine.nvim",
+    --     dependencies = {"nvim-tree/nvim-web-devicons"},
+    --     event = "VeryLazy",
+    --     config = function()
+    --         require("lualine").setup({
+    --             options = {
+    --                 theme = "catppuccin", -- or whatever your theme is
+    --                 icons_enabled = true,
+    --                 section_separators = {left = "", right = ""},
+    --                 component_separators = "|"
+    --             },
+    --             sections = {
+    --                 lualine_a = {"mode"}, -- e.g. NORMAL
+    --                 lualine_b = {"hostname", "branch"},
+    --                 lualine_c = {
+    --                     {"filename", path = 1} -- shows folder/file path
+    --                 },
+    --                 lualine_x = {
+    --                     {
+    --                         function()
+    --                             return " " ..
+    --                                        vim.fn
+    --                                            .matchstr(
+    --                                            vim.fn.system("node -v"),
+    --                                            "v[0-9.]*")
+    --                         end,
+    --                         icon = "",
+    --                         color = {fg = "#6cc644"}
+    --                     }, "encoding", "fileformat", "filetype",
+    --                     {
+    --                         function()
+    --                             return " " .. os.date("%H:%M")
+    --                         end,
+    --                         color = {fg = "#ff9ead"}
+    --                     }
+    --
+    --                 },
+    --                 lualine_y = {
+    --                     {"progress"} -- % through file
+    --                 },
+    --                 lualine_z = {
+    --                     {"location"} -- line & column
+    --                 }
+    --             }
+    --         })
+    --     end
+    --},
+    -- LSP and completion
     {"neovim/nvim-lspconfig", event = {"BufReadPre", "BufNewFile"}},
     {"williamboman/mason.nvim", cmd = "Mason"},
     {"williamboman/mason-lspconfig.nvim", event = {"BufReadPre", "BufNewFile"}},
@@ -187,10 +188,19 @@ require("lazy").setup({
         config = function()
             require("telescope").setup({
                 defaults = {
+                    vimgrep_arguments = {
+                        "rg",
+                        "--color=never",
+                        "--no-heading",
+                        "--with-filename",
+                        "--line-number",
+                        "--column",
+                        "--smart-case",
+                    },
                     layout_config = {horizontal = {preview_width = 0.5}},
                     sorting_strategy = "ascending",
                     layout_strategy = "horizontal",
-                    prompt_prefix = "🔍 ",
+                    prompt_prefix = " 🔍 ",
                     selection_caret = " "
                 }
             })
