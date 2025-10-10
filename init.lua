@@ -26,6 +26,9 @@ vim.g.loaded_netrwFileHandlers = 1
 -- Faster startup
 vim.loader.enable()
 
+
+
+
 require("config.lazy")
 require("plugins")
 require("config.autopairs")
