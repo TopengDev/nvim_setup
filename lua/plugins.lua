@@ -68,7 +68,7 @@ require("lazy").setup({
                   },
                   window = {
                     mappings = {
-                      ["d"] = "delete", -- normal delete mapping
+                      ["d"] = "buffer_delete", -- use buffer-friendly delete command
                     },
                   },
                 },
@@ -196,13 +196,25 @@ require("lazy").setup({
                         "--line-number",
                         "--column",
                         "--smart-case",
+                        "--hidden",  -- search hidden files
+                        "--glob=!.git/",  -- but ignore .git directory
                     },
                     layout_config = {horizontal = {preview_width = 0.5}},
                     sorting_strategy = "ascending",
                     layout_strategy = "horizontal",
                     prompt_prefix = " 🔍 ",
                     selection_caret = " "
-                }
+                },
+                pickers = {
+                    find_files = {
+                        find_command = {
+                            "rg",
+                            "--files",
+                            "--hidden",  -- include hidden files
+                            "--glob=!.git/",  -- but exclude .git directory
+                        },
+                    },
+                },
             })
         end
     },
@@ -355,5 +367,4 @@ require("lazy").setup({
 
 
 })
-
 

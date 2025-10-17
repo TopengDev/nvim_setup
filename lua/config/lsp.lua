@@ -43,6 +43,18 @@ local function is_tailwind_project()
          has_dependency("tailwindcss")
 end
 
+local function is_docker_project()
+  return has_file("Dockerfile") or has_file("docker-compose.yml") or
+         has_file("docker-compose.yaml") or has_file("Dockerfile.dev") or
+         has_file("Dockerfile.prod")
+end
+
+local function is_python_project()
+  return has_file("requirements.txt") or has_file("setup.py") or
+         has_file("pyproject.toml") or has_file("Pipfile") or
+         has_file("poetry.lock") or vim.fn.glob(vim.fn.getcwd() .. "/*.py") ~= ""
+end
+
 -- Shared on_attach logic
 local on_attach = function(client, bufnr)
   local bufmap = function(mode, lhs, rhs)
@@ -108,5 +120,31 @@ if is_solidity_project() then
   lspconfig.solidity_ls_nomicfoundation.setup({
     capabilities = capabilities,
     on_attach = on_attach,
+  })
+end
+
+-- Docker LSP - only for projects with Dockerfiles
+if is_docker_project() then
+  lspconfig.dockerls.setup({
+    cmd = { "docker-langserver", "--stdio" },
+    capabilities = capabilities,
+    on_attach = on_attach,
+  })
+end
+
+-- Python LSP - only for Python projects
+if is_python_project() then
+  lspconfig.pyright.setup({
+    capabilities = capabilities,
+    on_attach = on_attach,
+    settings = {
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+          diagnosticMode = "workspace",
+        },
+      },
+    },
   })
 end
