@@ -104,64 +104,55 @@ require("lazy").setup({
             vim.keymap.set("n", "<C-b>", ":Neotree toggle<CR>",
                            {silent = true, noremap = true})
         end
-    }, -- { "nvim-tree/nvim-tree.lua" },
-    -- { "nvim-tree/nvim-web-devicons" },
+    },
     -- LuaLine
-    -- {
-    --     "nvim-lualine/lualine.nvim",
-    --     dependencies = {"nvim-tree/nvim-web-devicons"},
-    --     event = "VeryLazy",
-    --     config = function()
-    --         require("lualine").setup({
-    --             options = {
-    --                 theme = "catppuccin", -- or whatever your theme is
-    --                 icons_enabled = true,
-    --                 section_separators = {left = "", right = ""},
-    --                 component_separators = "|"
-    --             },
-    --             sections = {
-    --                 lualine_a = {"mode"}, -- e.g. NORMAL
-    --                 lualine_b = {"hostname", "branch"},
-    --                 lualine_c = {
-    --                     {"filename", path = 1} -- shows folder/file path
-    --                 },
-    --                 lualine_x = {
-    --                     {
-    --                         function()
-    --                             return " " ..
-    --                                        vim.fn
-    --                                            .matchstr(
-    --                                            vim.fn.system("node -v"),
-    --                                            "v[0-9.]*")
-    --                         end,
-    --                         icon = "",
-    --                         color = {fg = "#6cc644"}
-    --                     }, "encoding", "fileformat", "filetype",
-    --                     {
-    --                         function()
-    --                             return " " .. os.date("%H:%M")
-    --                         end,
-    --                         color = {fg = "#ff9ead"}
-    --                     }
-    --
-    --                 },
-    --                 lualine_y = {
-    --                     {"progress"} -- % through file
-    --                 },
-    --                 lualine_z = {
-    --                     {"location"} -- line & column
-    --                 }
-    --             }
-    --         })
-    --     end
-    --},
+    {
+        "nvim-lualine/lualine.nvim",
+        dependencies = {"nvim-tree/nvim-web-devicons"},
+        event = "VeryLazy",
+        config = function()
+            require("lualine").setup({
+                options = {
+                    theme = "auto", -- automatically adapts to your colorscheme
+                    icons_enabled = true,
+                    section_separators = {left = "", right = ""},
+                    component_separators = "|",
+                    globalstatus = true, -- single statusline for all windows
+                },
+                sections = {
+                    lualine_a = {"mode"},
+                    lualine_b = {"branch", "diff", "diagnostics"},
+                    lualine_c = {{"filename", path = 1}}, -- shows relative path
+                    lualine_x = {"encoding", "fileformat", "filetype"},
+                    lualine_y = {"progress"},
+                    lualine_z = {"location"}
+                },
+                extensions = {"neo-tree", "trouble", "mason"}
+            })
+        end
+    },
     -- LSP and completion
     {"neovim/nvim-lspconfig", event = {"BufReadPre", "BufNewFile"}},
     {"williamboman/mason.nvim", cmd = "Mason"},
     {"williamboman/mason-lspconfig.nvim", event = {"BufReadPre", "BufNewFile"}},
     {"hrsh7th/nvim-cmp", event = "InsertEnter"},
     {"hrsh7th/cmp-nvim-lsp", event = "InsertEnter"},
-    {"L3MON4D3/LuaSnip", event = "InsertEnter"},
+    {
+      "L3MON4D3/LuaSnip",
+      event = "InsertEnter",
+      -- Build is optional - only needed for advanced regex support
+      -- If build fails, snippets will still work fine
+      build = (function()
+        if vim.fn.executable("make") == 1 then
+          return "make install_jsregexp"
+        end
+        return nil
+      end)(),
+      dependencies = { "rafamadriz/friendly-snippets" },
+      config = function()
+        require("luasnip.loaders.from_vscode").lazy_load()
+      end
+    },
     {"saadparwaiz1/cmp_luasnip", event = "InsertEnter"},
     { "rafamadriz/friendly-snippets", event = "InsertEnter" },
     { "hrsh7th/cmp-buffer", event = "InsertEnter" },
@@ -197,7 +188,8 @@ require("lazy").setup({
                         "--column",
                         "--smart-case",
                         "--hidden",  -- search hidden files
-                        "--glob=!.git/",  -- but ignore .git directory
+                        "--no-ignore",  -- include git-ignored files
+                        "--glob=!.git/",  -- but exclude .git directory
                     },
                     layout_config = {horizontal = {preview_width = 0.5}},
                     sorting_strategy = "ascending",
@@ -211,6 +203,7 @@ require("lazy").setup({
                             "rg",
                             "--files",
                             "--hidden",  -- include hidden files
+                            "--no-ignore",  -- include git-ignored files
                             "--glob=!.git/",  -- but exclude .git directory
                         },
                     },
@@ -365,6 +358,81 @@ require("lazy").setup({
       end
     },
 
+    -- Terminal integration
+    {
+      "akinsho/toggleterm.nvim",
+      version = "*",
+      keys = {
+        {"<C-t>", "<cmd>ToggleTerm<cr>", desc = "Toggle terminal"},
+        {"<leader>tf", "<cmd>ToggleTerm direction=float<cr>", desc = "Toggle floating terminal"},
+        {"<leader>th", "<cmd>ToggleTerm direction=horizontal<cr>", desc = "Toggle horizontal terminal"},
+        {"<leader>tv", "<cmd>ToggleTerm direction=vertical<cr>", desc = "Toggle vertical terminal"},
+      },
+      config = function()
+        require("toggleterm").setup({
+          size = function(term)
+            if term.direction == "horizontal" then
+              return 15
+            elseif term.direction == "vertical" then
+              return vim.o.columns * 0.4
+            end
+          end,
+          open_mapping = [[<C-t>]],
+          hide_numbers = true,
+          shade_terminals = true,
+          shading_factor = 2,
+          start_in_insert = true,
+          insert_mappings = true,
+          terminal_mappings = true,
+          persist_size = true,
+          persist_mode = true,
+          direction = "float",
+          close_on_exit = true,
+          shell = vim.o.shell,
+          float_opts = {
+            border = "curved",
+            winblend = 0,
+            highlights = {
+              border = "Normal",
+              background = "Normal",
+            },
+          },
+        })
+
+        -- Terminal mode keybindings for easy escape
+        function _G.set_terminal_keymaps()
+          local opts = {buffer = 0}
+          vim.keymap.set('t', '<esc>', [[<C-\><C-n>]], opts)
+          vim.keymap.set('t', '<C-h>', [[<Cmd>wincmd h<CR>]], opts)
+          vim.keymap.set('t', '<C-j>', [[<Cmd>wincmd j<CR>]], opts)
+          vim.keymap.set('t', '<C-k>', [[<Cmd>wincmd k<CR>]], opts)
+          vim.keymap.set('t', '<C-l>', [[<Cmd>wincmd l<CR>]], opts)
+        end
+
+        vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
+      end
+    },
+
+    -- Markdown preview with Glow
+    {
+      "ellisonleao/glow.nvim",
+      cmd = "Glow",
+      ft = { "markdown" },
+      keys = {
+        {"<leader>mp", "<cmd>Glow<cr>", desc = "Preview Markdown with Glow"},
+      },
+      config = function()
+        require("glow").setup({
+          border = "rounded",
+          style = "dark",
+          pager = false,
+          width = 120,
+          height = 100,
+          width_ratio = 0.8,
+          height_ratio = 0.8,
+        })
+      end
+    },
 
 })
 

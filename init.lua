@@ -26,6 +26,10 @@ vim.g.loaded_netrwFileHandlers = 1
 -- Faster startup
 vim.loader.enable()
 
+-- Enable syntax highlighting and filetype detection
+vim.cmd("syntax enable")
+vim.cmd("filetype plugin indent on")
+
 require("config.lazy")
 require("plugins")
 require("config.autopairs")
@@ -58,6 +62,18 @@ vim.api.nvim_set_hl(0, "CursorLineNr", { bg = "none" })
 vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
 vim.api.nvim_set_hl(0, "FoldColumn", { bg = "none" })
 
+
+-- LSP utility commands
+vim.api.nvim_create_user_command("LspRestart", function()
+  vim.cmd("LspStop")
+  vim.defer_fn(function()
+    vim.cmd("edit") -- Reload buffer to trigger LSP
+  end, 100)
+end, { desc = "Restart LSP for current buffer" })
+
+vim.api.nvim_create_user_command("LspLog", function()
+  vim.cmd("edit " .. vim.lsp.get_log_path())
+end, { desc = "Open LSP log file" })
 
 -- Show absolute line numbers
 vim.wo.number = true

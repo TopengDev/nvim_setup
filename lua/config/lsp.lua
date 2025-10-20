@@ -1,59 +1,59 @@
+-- Suppress lspconfig deprecation warning for Neovim 0.11+
+-- This warning is about the upcoming v3.0.0 API change, but lspconfig still works fine
+local original_notify = vim.notify
+local original_notify_once = vim.notify_once
+local original_deprecate = vim.deprecate
+
+vim.notify = function(msg, ...)
+  if msg and type(msg) == "string" then
+    if msg:match("lspconfig") or msg:match("deprecated") or msg:match("vim.lsp.config") or msg:match("framework") then
+      return
+    end
+  end
+  original_notify(msg, ...)
+end
+
+vim.notify_once = function(msg, ...)
+  if msg and type(msg) == "string" then
+    if msg:match("lspconfig") or msg:match("deprecated") or msg:match("vim.lsp.config") or msg:match("framework") then
+      return
+    end
+  end
+  original_notify_once(msg, ...)
+end
+
+-- Suppress vim.deprecate for lspconfig warnings
+vim.deprecate = function(name, alternative, version, plugin, ...)
+  -- Only suppress lspconfig-related deprecation warnings
+  if plugin and plugin:match("lspconfig") then
+    return
+  end
+  if name and name:match("lspconfig") then
+    return
+  end
+  original_deprecate(name, alternative, version, plugin, ...)
+end
+
 -- mason & mason-lspconfig
 require("mason").setup()
 require("mason-lspconfig").setup({
-  -- Only install servers that we detect are needed
-  ensure_installed = {},
+  ensure_installed = {
+    "ts_ls",        -- TypeScript/JavaScript
+    "eslint",       -- ESLint
+    "tailwindcss",  -- TailwindCSS
+    "gopls",        -- Go
+    "pyright",      -- Python
+    "lua_ls",       -- Lua
+    "dockerls",     -- Docker
+    "marksman",     -- Markdown
+  },
   automatic_installation = true,
 })
 
 -- Include cmp capabilities
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
--- Helper functions for project detection
-local function has_file(filename)
-  return vim.fn.filereadable(vim.fn.getcwd() .. "/" .. filename) == 1
-end
-
-local function has_dependency(package_name)
-  local package_json = vim.fn.getcwd() .. "/package.json"
-  if vim.fn.filereadable(package_json) == 1 then
-    local content = vim.fn.readfile(package_json)
-    local json_str = table.concat(content, "\n")
-    return string.find(json_str, package_name) ~= nil
-  end
-  return false
-end
-
-local function is_js_ts_project()
-  return has_file("package.json") or has_file("tsconfig.json") or has_file("jsconfig.json")
-end
-
-local function is_go_project()
-  return has_file("go.mod") or has_file("go.sum")
-end
-
-local function is_solidity_project()
-  return has_file("hardhat.config.js") or has_file("hardhat.config.ts") or
-         has_file("truffle-config.js") or has_file("foundry.toml") or
-         has_dependency("hardhat") or has_dependency("truffle")
-end
-
-local function is_tailwind_project()
-  return has_file("tailwind.config.js") or has_file("tailwind.config.ts") or
-         has_dependency("tailwindcss")
-end
-
-local function is_docker_project()
-  return has_file("Dockerfile") or has_file("docker-compose.yml") or
-         has_file("docker-compose.yaml") or has_file("Dockerfile.dev") or
-         has_file("Dockerfile.prod")
-end
-
-local function is_python_project()
-  return has_file("requirements.txt") or has_file("setup.py") or
-         has_file("pyproject.toml") or has_file("Pipfile") or
-         has_file("poetry.lock") or vim.fn.glob(vim.fn.getcwd() .. "/*.py") ~= ""
-end
+local lspconfig = require("lspconfig")
+local util = require("lspconfig.util")
 
 -- Shared on_attach logic
 local on_attach = function(client, bufnr)
@@ -68,83 +68,142 @@ local on_attach = function(client, bufnr)
 
   -- Keymaps
   bufmap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>")
+  bufmap("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>")
+  bufmap("n", "gr", "<cmd>lua vim.lsp.buf.references()<CR>")
+  bufmap("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>")
+  bufmap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>")
+  bufmap("n", "<leader>k", "<cmd>lua vim.lsp.buf.signature_help()<CR>")
+  bufmap("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<CR>")
+  bufmap("n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
+  bufmap("v", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<CR>")
+  bufmap("n", "<leader>fm", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
+  bufmap("v", "<leader>fm", "<cmd>lua vim.lsp.buf.format({ async = true })<CR>")
+  bufmap("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>")
+  bufmap("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>")
+  bufmap("n", "<leader>d", "<cmd>lua vim.diagnostic.open_float()<CR>")
+  bufmap("n", "<leader>q", "<cmd>lua vim.diagnostic.setloclist()<CR>")
 end
 
--- Setup language servers conditionally
-local lspconfig = require("lspconfig")
+-- TypeScript/JavaScript LSP
+lspconfig.ts_ls.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern("package.json", "tsconfig.json", "jsconfig.json"),
+  single_file_support = false,
+})
 
--- TypeScript/JavaScript LSP - only for JS/TS projects
-if is_js_ts_project() then
-  lspconfig.ts_ls.setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-    single_file_support = false,
-  })
+-- ESLint
+lspconfig.eslint.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(
+    ".eslintrc",
+    ".eslintrc.js",
+    ".eslintrc.json",
+    ".eslintrc.yaml",
+    ".eslintrc.yml",
+    "package.json"
+  ),
+})
 
-  -- ESLint - only if eslint config exists
-  local eslint_configs = {".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yaml", ".eslintrc.yml"}
-  local has_eslint = false
-  for _, config in ipairs(eslint_configs) do
-    if has_file(config) then
-      has_eslint = true
-      break
-    end
-  end
+-- TailwindCSS
+lspconfig.tailwindcss.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(
+    "tailwind.config.js",
+    "tailwind.config.ts",
+    "tailwind.config.cjs",
+    "postcss.config.js",
+    "postcss.config.cjs"
+  ),
+})
 
-  if has_eslint or has_dependency("eslint") then
-    lspconfig.eslint.setup({
-      capabilities = capabilities,
-      on_attach = on_attach,
-    })
-  end
-end
+-- Go LSP
+lspconfig.gopls.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern("go.mod", "go.sum", ".git"),
+})
 
--- TailwindCSS - only for projects using Tailwind
-if is_tailwind_project() then
-  lspconfig.tailwindcss.setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-end
+-- Solidity LSP
+lspconfig.solidity_ls_nomicfoundation.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(
+    "hardhat.config.js",
+    "hardhat.config.ts",
+    "truffle-config.js",
+    "foundry.toml",
+    ".git"
+  ),
+})
 
--- Go LSP - only for Go projects
-if is_go_project() then
-  lspconfig.gopls.setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-end
+-- Docker LSP
+lspconfig.dockerls.setup({
+  cmd = { "docker-langserver", "--stdio" },
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern("Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".git"),
+})
 
--- Solidity LSP - only for Solidity projects
-if is_solidity_project() then
-  lspconfig.solidity_ls_nomicfoundation.setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-end
-
--- Docker LSP - only for projects with Dockerfiles
-if is_docker_project() then
-  lspconfig.dockerls.setup({
-    cmd = { "docker-langserver", "--stdio" },
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-end
-
--- Python LSP - only for Python projects
-if is_python_project() then
-  lspconfig.pyright.setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-    settings = {
-      python = {
-        analysis = {
-          autoSearchPaths = true,
-          useLibraryCodeForTypes = true,
-          diagnosticMode = "workspace",
-        },
+-- Python LSP
+lspconfig.pyright.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(
+    "pyproject.toml",
+    "setup.py",
+    "setup.cfg",
+    "requirements.txt",
+    "Pipfile",
+    "poetry.lock",
+    ".git"
+  ),
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+        diagnosticMode = "workspace",
       },
     },
-  })
-end
+  },
+})
+
+-- Lua LSP (for Neovim config editing)
+lspconfig.lua_ls.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(".luarc.json", ".luarc.jsonc", ".luacheckrc", ".git"),
+  settings = {
+    Lua = {
+      runtime = {
+        version = "LuaJIT",
+      },
+      diagnostics = {
+        globals = { "vim" },
+      },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+      telemetry = {
+        enable = false,
+      },
+    },
+  },
+})
+
+-- Markdown LSP
+lspconfig.marksman.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = util.root_pattern(".git", ".marksman.toml"),
+  filetypes = { "markdown", "markdown.mdx" },
+})
+
+-- Restore original functions after all LSP configurations are done
+vim.notify = original_notify
+vim.notify_once = original_notify_once
+vim.deprecate = original_deprecate
