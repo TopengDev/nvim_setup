@@ -434,5 +434,12 @@ require("lazy").setup({
       end
     },
 
+  -- Speedtyper for typing test
+  {
+    "NStefan002/speedtyper.nvim",
+    branch = "v2",
+    lazy = false,
+  },
+
 })
 
