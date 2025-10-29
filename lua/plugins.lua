@@ -440,6 +440,11 @@ require("lazy").setup({
     branch = "v2",
     lazy = false,
   },
+	{
+  	"mg979/vim-visual-multi",
+  	branch = "master"
+	},
+
 
 })
 
