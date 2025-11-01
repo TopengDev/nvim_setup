@@ -413,24 +413,18 @@ require("lazy").setup({
       end
     },
 
-    -- Markdown preview with Glow
+    -- Markdown preview with browser
     {
-      "ellisonleao/glow.nvim",
-      cmd = "Glow",
+      "iamcco/markdown-preview.nvim",
+      cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
       ft = { "markdown" },
+      build = "cd app && npm install",
       keys = {
-        {"<leader>mp", "<cmd>Glow<cr>", desc = "Preview Markdown with Glow"},
+        {"<leader>mp", "<cmd>MarkdownPreviewToggle<cr>", desc = "Toggle Markdown Preview"},
       },
       config = function()
-        require("glow").setup({
-          border = "rounded",
-          style = "dark",
-          pager = false,
-          width = 120,
-          height = 100,
-          width_ratio = 0.8,
-          height_ratio = 0.8,
-        })
+        vim.g.mkdp_auto_close = 0
+        vim.g.mkdp_theme = 'dark'
       end
     },
 
