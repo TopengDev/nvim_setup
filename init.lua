@@ -105,6 +105,39 @@ vim.o.foldlevel = 99 -- so folds are open by default
 vim.keymap.set("n", "<C-/>", "gcc", { remap = true }) -- Ctrl+/ in normal
 vim.keymap.set("v", "<C-/>", "gc", { remap = true })  -- Ctrl+/ in visual
 
+-- Word navigation with Ctrl+Left/Right
+vim.keymap.set("n", "<C-Left>", "b", { noremap = true, silent = true })  -- Move to beginning of word
+vim.keymap.set("n", "<C-Right>", "e", { noremap = true, silent = true }) -- Move to end of word
+vim.keymap.set("i", "<C-Left>", "<C-o>b", { noremap = true, silent = true })  -- Move to beginning of word in insert mode
+vim.keymap.set("i", "<C-Right>", "<C-o>e<C-o>a", { noremap = true, silent = true }) -- Move to end of word in insert mode
+vim.keymap.set("v", "<C-Left>", "b", { noremap = true, silent = true })  -- Move to beginning of word in visual mode
+vim.keymap.set("v", "<C-Right>", "e", { noremap = true, silent = true }) -- Move to end of word in visual mode
+
+-- Move 5 lines up/down with Ctrl+Up/Down
+-- Set after plugins load to override vim-visual-multi
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    vim.keymap.set("n", "<C-Up>", "5k", { noremap = true, silent = true, desc = "Move 5 lines up" })
+    vim.keymap.set("n", "<C-Down>", "5j", { noremap = true, silent = true, desc = "Move 5 lines down" })
+    vim.keymap.set("i", "<C-Up>", "<C-o>5k", { noremap = true, silent = true, desc = "Move 5 lines up" })
+    vim.keymap.set("i", "<C-Down>", "<C-o>5j", { noremap = true, silent = true, desc = "Move 5 lines down" })
+    vim.keymap.set("v", "<C-Up>", "5k", { noremap = true, silent = true, desc = "Move 5 lines up" })
+    vim.keymap.set("v", "<C-Down>", "5j", { noremap = true, silent = true, desc = "Move 5 lines down" })
+  end,
+})
+
+-- Scroll view by 10 lines with Ctrl+Shift+Up/Down (cursor stays in place)
+vim.keymap.set("n", "<C-S-Up>", "10<C-y>", { noremap = true, silent = true, desc = "Scroll view up 10 lines" })
+vim.keymap.set("n", "<C-S-Down>", "10<C-e>", { noremap = true, silent = true, desc = "Scroll view down 10 lines" })
+vim.keymap.set("i", "<C-S-Up>", "<C-o>10<C-y>", { noremap = true, silent = true, desc = "Scroll view up 10 lines" })
+vim.keymap.set("i", "<C-S-Down>", "<C-o>10<C-e>", { noremap = true, silent = true, desc = "Scroll view down 10 lines" })
+vim.keymap.set("v", "<C-S-Up>", "10<C-y>", { noremap = true, silent = true, desc = "Scroll view up 10 lines" })
+vim.keymap.set("v", "<C-S-Down>", "10<C-e>", { noremap = true, silent = true, desc = "Scroll view down 10 lines" })
+
+-- Also override paragraph motions { and } to not interfere
+vim.keymap.set("n", "{", "{", { noremap = true, silent = true, desc = "Paragraph backward" })
+vim.keymap.set("n", "}", "}", { noremap = true, silent = true, desc = "Paragraph forward" })
+
 -- NORMAL mode: duplicate line up/down
 vim.keymap.set("n", "<S-A-Up>", "yyP", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-A-Down>", "yyp", { noremap = true, silent = true })

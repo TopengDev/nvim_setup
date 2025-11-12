@@ -1,5 +1,16 @@
 require("lazy").setup({
-    { "mg979/vim-visual-multi", branch = "master", event = "VeryLazy" },
+    {
+      "mg979/vim-visual-multi",
+      branch = "master",
+      event = "VeryLazy",
+      init = function()
+        -- Disable vim-visual-multi's Ctrl+Up/Down mappings
+        vim.g.VM_maps = {
+          ["Add Cursor Down"] = "",  -- Disable Ctrl+Down for adding cursors
+          ["Add Cursor Up"] = "",    -- Disable Ctrl+Up for adding cursors
+        }
+      end,
+    },
     -- Color schemes
     {"rebelot/kanagawa.nvim"},
     {"tahayvr/themery.nvim", priority = 1000, lazy = false},
@@ -306,18 +317,16 @@ require("lazy").setup({
         require("todo-comments").setup()
       end
     },
-    {
-      "numToStr/Navigator.nvim",
-      keys = {
-        {"<C-Left>", "<cmd>NavigatorLeft<cr>", desc = "Navigate Left"},
-        {"<C-Right>", "<cmd>NavigatorRight<cr>", desc = "Navigate Right"},
-        {"<C-Up>", "<cmd>NavigatorUp<cr>", desc = "Navigate Up"},
-        {"<C-Down>", "<cmd>NavigatorDown<cr>", desc = "Navigate Down"},
-      },
-      config = function()
-        require("Navigator").setup()
-      end
-    },
+    -- {
+    --   "numToStr/Navigator.nvim",
+    --   keys = {
+    --     {"<C-Up>", "<cmd>NavigatorUp<cr>", desc = "Navigate Up"},
+    --     {"<C-Down>", "<cmd>NavigatorDown<cr>", desc = "Navigate Down"},
+    --   },
+    --   config = function()
+    --     require("Navigator").setup()
+    --   end
+    -- },
     {
       "stevearc/oil.nvim",
       cmd = "Oil",
