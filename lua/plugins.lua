@@ -15,7 +15,11 @@ require("lazy").setup({
 
     -- Color schemes
     {"rebelot/kanagawa.nvim"},
-    {"tahayvr/themery.nvim", priority = 1000, lazy = false},
+    {
+      "tahayvr/themery.nvim",
+      priority = 1000,
+      cmd = "Themery",
+    },
     {"EdenEast/nightfox.nvim", lazy = true},
     {
       "lukas-reineke/indent-blankline.nvim",
@@ -253,7 +257,9 @@ require("lazy").setup({
                         "--smart-case",
                         "--hidden",  -- search hidden files
                         "--no-ignore",  -- include git-ignored files
-                        "--glob=!.git/",  -- but exclude .git directory
+                        "--glob=!.git/",  -- exclude .git directory
+                        "--glob=!node_modules/",  -- exclude node_modules
+                        "--glob=!.next/",  -- exclude .next
                     },
                     layout_config = {
                         horizontal = {
@@ -324,8 +330,12 @@ require("lazy").setup({
       end,
     },
 
-    -- Prettier and eslint
-    {"MunifTanjim/prettier.nvim", event = {"BufReadPre", "BufNewFile"}},
+    -- Prettier
+    {
+      "MunifTanjim/prettier.nvim",
+      event = {"BufReadPre", "BufNewFile"},
+      dependencies = {"nvimtools/none-ls.nvim"},
+    },
 
     -- Commenter
     {
@@ -538,7 +548,7 @@ require("lazy").setup({
   {
     "NStefan002/speedtyper.nvim",
     branch = "v2",
-    lazy = false,
+    cmd = {"Speedtyper", "SpeedtyperToggle"},
   },
 })
 

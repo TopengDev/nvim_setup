@@ -19,21 +19,24 @@ local function has_eslint_config(root_dir)
   return false
 end
 
-local root = vim.fn.getcwd()
-
-local sources = {
-  null_ls.builtins.formatting.prettier
-}
-
-if has_eslint_config(root) then
-  table.insert(sources, require("none-ls.diagnostics.eslint"))
-  table.insert(sources, require("none-ls.code_actions.eslint"))
-end
-
+-- Setup sources with conditional eslint based on project root
 null_ls.setup({
   debug = false,
   log_level = "warn",
-  sources = sources,
+  sources = {
+    null_ls.builtins.formatting.prettier,
+    -- Conditionally enable eslint based on project root detection
+    require("none-ls.diagnostics.eslint").with({
+      condition = function(utils)
+        return utils.root_has_file(eslint_config_files)
+      end,
+    }),
+    require("none-ls.code_actions.eslint").with({
+      condition = function(utils)
+        return utils.root_has_file(eslint_config_files)
+      end,
+    }),
+  },
   on_attach = function(client, bufnr)
     -- Format on save disabled to prevent performance issues
     -- To manually format, use :lua vim.lsp.buf.format()

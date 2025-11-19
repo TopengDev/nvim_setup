@@ -50,11 +50,8 @@ vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
 vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
 vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
 vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })
-
--- Transparent line number background
 vim.api.nvim_set_hl(0, "LineNr", { bg = "none" })
 vim.api.nvim_set_hl(0, "CursorLineNr", { bg = "none" })
-vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
 vim.api.nvim_set_hl(0, "FoldColumn", { bg = "none" })
 
 
@@ -71,25 +68,11 @@ vim.api.nvim_create_user_command("LspLog", function()
 end, { desc = "Open LSP log file" })
 
 -- Show absolute line numbers
-vim.wo.number = true
-
-vim.wo.cursorline = true -- highlight current line
-
+vim.opt.number = true
+vim.opt.cursorline = true -- highlight current line
 
 -- Show relative line numbers (optional, good for motions like 5j/5k)
--- vim.wo.relativenumber = true
-
--- Find files (like Ctrl+P in VSCode)
-vim.keymap.set("n", "<C-p>", "<cmd>Telescope find_files<CR>", { silent = true })
-
--- Search in files (like Ctrl+Shift+F)
-vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", { silent = true })
-
--- Show open buffers
-vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { silent = true })
-
--- Recently opened files
-vim.keymap.set("n", "<leader>fr", "<cmd>Telescope oldfiles<CR>", { silent = true })
+-- vim.opt.relativenumber = true
 
 -- Toggle comment shortcut
 vim.keymap.set("n", "<C-/>", "gcc", { remap = true }) -- Ctrl+/ in normal
