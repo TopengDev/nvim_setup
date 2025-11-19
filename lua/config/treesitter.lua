@@ -26,6 +26,21 @@ require("nvim-treesitter.configs").setup({
   sync_install = false, -- Install parsers asynchronously
 })
 
+-- Enable treesitter-based folding after buffer is loaded
+vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+  pattern = "*",
+  callback = function()
+    -- Check if treesitter parser exists for this buffer
+    local has_parser = pcall(vim.treesitter.get_parser, 0)
+    if has_parser then
+      vim.wo.foldmethod = "expr"
+      vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+      vim.wo.foldlevel = 99
+      vim.wo.foldenable = true
+    end
+  end,
+})
+
 require('nvim-ts-autotag').setup({
   opts = {
     -- Defaults

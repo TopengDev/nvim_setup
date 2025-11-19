@@ -1,4 +1,5 @@
 require("lazy").setup({
+    -- Multi-cursor support
     {
       "mg979/vim-visual-multi",
       branch = "master",
@@ -11,11 +12,20 @@ require("lazy").setup({
         }
       end,
     },
+
     -- Color schemes
     {"rebelot/kanagawa.nvim"},
     {"tahayvr/themery.nvim", priority = 1000, lazy = false},
     {"EdenEast/nightfox.nvim", lazy = true},
-    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {}, event = "BufReadPost" },
+    {
+      "lukas-reineke/indent-blankline.nvim",
+      main = "ibl",
+      event = {"BufReadPost", "BufNewFile"},
+      dependencies = {"nvim-treesitter/nvim-treesitter"},
+      config = function()
+        require("config.indent")
+      end,
+    },
     {"morhetz/gruvbox", lazy = true},
     {"folke/tokyonight.nvim", lazy = true},
     {"vague2k/vague.nvim", lazy = true},
@@ -143,16 +153,42 @@ require("lazy").setup({
         end
     },
     -- LSP and completion
-    {"neovim/nvim-lspconfig", event = {"BufReadPre", "BufNewFile"}},
-    {"williamboman/mason.nvim", cmd = "Mason"},
-    {"williamboman/mason-lspconfig.nvim", event = {"BufReadPre", "BufNewFile"}},
-    {"hrsh7th/nvim-cmp", event = "InsertEnter"},
-    {"hrsh7th/cmp-nvim-lsp", event = "InsertEnter"},
+    {
+      "neovim/nvim-lspconfig",
+      event = {"BufReadPre", "BufNewFile"},
+      dependencies = {
+        "williamboman/mason.nvim",
+        "williamboman/mason-lspconfig.nvim",
+        "hrsh7th/cmp-nvim-lsp",
+      },
+      config = function()
+        require("config.lsp")
+      end,
+    },
+    {
+      "williamboman/mason.nvim",
+      cmd = "Mason",
+      build = ":MasonUpdate",
+    },
+    {"williamboman/mason-lspconfig.nvim", lazy = true},
+    {
+      "hrsh7th/nvim-cmp",
+      event = "InsertEnter",
+      dependencies = {
+        "hrsh7th/cmp-nvim-lsp",
+        "L3MON4D3/LuaSnip",
+        "saadparwaiz1/cmp_luasnip",
+        "hrsh7th/cmp-buffer",
+        "hrsh7th/cmp-path",
+      },
+      config = function()
+        require("config.cmp")
+      end,
+    },
+    {"hrsh7th/cmp-nvim-lsp", lazy = true},
     {
       "L3MON4D3/LuaSnip",
-      event = "InsertEnter",
-      -- Build is optional - only needed for advanced regex support
-      -- If build fails, snippets will still work fine
+      lazy = true,
       build = (function()
         if vim.fn.executable("make") == 1 then
           return "make install_jsregexp"
@@ -164,15 +200,32 @@ require("lazy").setup({
         require("luasnip.loaders.from_vscode").lazy_load()
       end
     },
-    {"saadparwaiz1/cmp_luasnip", event = "InsertEnter"},
-    { "rafamadriz/friendly-snippets", event = "InsertEnter" },
-    { "hrsh7th/cmp-buffer", event = "InsertEnter" },
-    { "hrsh7th/cmp-path", event = "InsertEnter" },
-    {"nvimtools/none-ls.nvim", event = {"BufReadPre", "BufNewFile"}},
-    {"nvimtools/none-ls-extras.nvim", event = {"BufReadPre", "BufNewFile"}},
+    {"saadparwaiz1/cmp_luasnip", lazy = true},
+    { "rafamadriz/friendly-snippets", lazy = true },
+    { "hrsh7th/cmp-buffer", lazy = true },
+    { "hrsh7th/cmp-path", lazy = true },
+    {
+      "nvimtools/none-ls.nvim",
+      event = {"BufReadPre", "BufNewFile"},
+      dependencies = {"nvimtools/none-ls-extras.nvim"},
+      config = function()
+        require("config.none-ls")
+      end,
+    },
+    {"nvimtools/none-ls-extras.nvim", lazy = true},
 
     -- Syntax highlighting
-    {"nvim-treesitter/nvim-treesitter", build = ":TSUpdate", event = {"BufReadPost", "BufNewFile"}},
+    {
+      "nvim-treesitter/nvim-treesitter",
+      build = ":TSUpdate",
+      event = {"BufReadPost", "BufNewFile"},
+      dependencies = {
+        "nvim-treesitter/nvim-treesitter-textobjects",
+      },
+      config = function()
+        require("config.treesitter")
+      end,
+    },
     { "windwp/nvim-ts-autotag", event = "InsertEnter" },
 
     -- Telescope (fuzzy finder)
@@ -202,11 +255,25 @@ require("lazy").setup({
                         "--no-ignore",  -- include git-ignored files
                         "--glob=!.git/",  -- but exclude .git directory
                     },
-                    layout_config = {horizontal = {preview_width = 0.5}},
+                    layout_config = {
+                        horizontal = {
+                            preview_width = 0.5,
+                            width = 0.9,
+                            height = 0.8,
+                        }
+                    },
                     sorting_strategy = "ascending",
                     layout_strategy = "horizontal",
-                    prompt_prefix = " 🔍 ",
-                    selection_caret = " "
+                    prompt_prefix = "🔍 ",
+                    selection_caret = "> ",
+                    entry_prefix = "  ",
+                    -- Fix for text shifting issue
+                    dynamic_preview_title = false,
+                    -- Disable wrapping to prevent indentation issues
+                    wrap_results = false,
+                    -- Additional display fixes
+                    scroll_strategy = "cycle",
+                    borderchars = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
                 },
                 pickers = {
                     find_files = {
@@ -216,15 +283,46 @@ require("lazy").setup({
                             "--hidden",  -- include hidden files
                             "--no-ignore",  -- include git-ignored files
                             "--glob=!.git/",  -- but exclude .git directory
+                            "--glob=!node_modules/",  -- exclude node_modules
+                            "--glob=!.next/",  -- exclude .next
                         },
                     },
                 },
             })
+
+            -- Disable indent-blankline in Telescope buffers to prevent visual bugs
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = "TelescopeResults",
+                callback = function(ctx)
+                    vim.api.nvim_buf_call(ctx.buf, function()
+                        vim.fn.matchdelete(vim.fn.matchadd('Conceal', '\\(.*/\\)\\@<=.*', 0, -1, { conceal = '' }))
+                    end)
+                end,
+            })
+
+            -- Disable problematic features in Telescope windows
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = {"TelescopePrompt", "TelescopeResults", "TelescopePreview"},
+                callback = function()
+                    -- Disable indent-blankline
+                    vim.b.indent_blankline_enabled = false
+                    -- Disable treesitter indent
+                    vim.bo.indentexpr = ""
+                    -- Ensure no folding
+                    vim.wo.foldmethod = "manual"
+                    vim.wo.foldenable = false
+                end,
+            })
         end
     },
-    -- Auto-close & auto-rename tag
-    {"windwp/nvim-autopairs", event = "InsertEnter"},
-    {"windwp/nvim-ts-autotag", event = "InsertEnter"},
+    -- Auto-close pairs
+    {
+      "windwp/nvim-autopairs",
+      event = "InsertEnter",
+      config = function()
+        require("config.autopairs")
+      end,
+    },
 
     -- Prettier and eslint
     {"MunifTanjim/prettier.nvim", event = {"BufReadPre", "BufNewFile"}},
@@ -360,8 +458,7 @@ require("lazy").setup({
     },
     {
       "nvim-treesitter/nvim-treesitter-textobjects",
-      dependencies = {"nvim-treesitter/nvim-treesitter"},
-      event = {"BufReadPost", "BufNewFile"},
+      lazy = true,
       config = function()
         require("config.treesitter-textobjects")
       end
@@ -443,11 +540,5 @@ require("lazy").setup({
     branch = "v2",
     lazy = false,
   },
-	{
-  	"mg979/vim-visual-multi",
-  	branch = "master"
-	},
-
-
 })
 

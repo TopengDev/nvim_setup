@@ -32,11 +32,6 @@ vim.cmd("filetype plugin indent on")
 
 require("config.lazy")
 require("plugins")
-require("config.autopairs")
-require("config.lsp")
-require("config.none-ls")
-require("config.treesitter")
-require("config.cmp")
 
 -- Live preview colorschemes
 vim.keymap.set("n", "<leader>cs", function()
@@ -95,11 +90,6 @@ vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { silent = true 
 
 -- Recently opened files
 vim.keymap.set("n", "<leader>fr", "<cmd>Telescope oldfiles<CR>", { silent = true })
-
--- Treesitter-based folding
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "nvim_treesitter#foldexpr()"
-vim.o.foldlevel = 99 -- so folds are open by default
 
 -- Toggle comment shortcut
 vim.keymap.set("n", "<C-/>", "gcc", { remap = true }) -- Ctrl+/ in normal
