@@ -100,14 +100,13 @@ lspconfig.eslint.setup({
   -- is heavy (loads the flat config + typescript-eslint); onType re-lints the whole
   -- project on each change -> the CPU/RAM spike during move+undo storms. (2026-06-18)
   settings = { run = "onSave" },
-  root_dir = util.root_pattern(
-    ".eslintrc",
-    ".eslintrc.js",
-    ".eslintrc.json",
-    ".eslintrc.yaml",
-    ".eslintrc.yml",
-    "package.json"
-  ),
+  -- Do NOT override root_dir. lspconfig's default eslint root_dir only attaches when a
+  -- REAL eslint config exists (flat `eslint.config.*` or legacy `.eslintrc*`, or
+  -- package.json#eslintConfig) and handles flat-config + workingDirectory detection.
+  -- The old override matched bare `package.json` (and omitted flat configs), so eslint
+  -- attached to config-less projects and the server spammed `-32603 "Could not find
+  -- config file"` on every diagnostic pull -> flicker + typing stutter (hit on the
+  -- Windows/w-10 setup). (2026-06-18)
 })
 
 -- TailwindCSS
