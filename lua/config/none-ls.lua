@@ -24,18 +24,14 @@ null_ls.setup({
   debug = false,
   log_level = "warn",
   sources = {
-    null_ls.builtins.formatting.prettier,
-    -- Conditionally enable eslint based on project root detection
-    require("none-ls.diagnostics.eslint").with({
-      condition = function(utils)
-        return utils.root_has_file(eslint_config_files)
-      end,
+    null_ls.builtins.formatting.prettier.with({
+      filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact", "css", "scss", "html", "json", "yaml", "markdown" },
     }),
-    require("none-ls.code_actions.eslint").with({
-      condition = function(utils)
-        return utils.root_has_file(eslint_config_files)
-      end,
-    }),
+    -- ESLint removed from none-ls (2026-06-18): it errored on every buffer change
+    -- (none-ls/helpers/cache.lua:52 "attempt to index a nil value" with flat eslint
+    -- configs) AND duplicated the eslint LSP (lspconfig.eslint). The eslint LSP now
+    -- owns eslint diagnostics + code actions (and lints onSave). Running both on every
+    -- change was a big contributor to the move/undo stutter + CPU/RAM spike.
   },
   on_attach = function(client, bufnr)
     -- Format on save disabled to prevent performance issues

@@ -5,6 +5,10 @@ require("nvim-treesitter.configs").setup({
     "dockerfile", "vim", "vimdoc", "regex"
   },
   highlight = {
+    -- Re-enabled 2026-06-18: nvim pinned to 0.11.x (user-local ~/.local/bin/nvim), which IS
+    -- compatible with nvim-treesitter `master`. (master was archived 2025-05-24 and crashes on
+    -- nvim 0.12 with "attempt to call method 'range' (nil)". Only migrate to the `main` branch
+    -- if/when moving back to 0.12.)
     enable = true,
     -- Enable vim regex highlighting as fallback when treesitter parser is not available
     additional_vim_regex_highlighting = { "markdown" },
@@ -19,7 +23,11 @@ require("nvim-treesitter.configs").setup({
     },
   },
   indent = {
-    enable = true,
+    -- Disabled 2026-06-18: the archived `master` treesitter indent has known gaps on
+    -- JSX/TSX (returns 0 on some nodes -> new lines land at column 0 on <CR> / ==).
+    -- Falling back to the bundled filetype indent (GetTypescriptIndent), which is
+    -- uniform for TS/JS/JSX. autoindent stays on as the baseline.
+    enable = false,
   },
   -- Performance optimizations
   auto_install = true,
