@@ -5,10 +5,10 @@ require("lazy").setup({
       branch = "master",
       event = "VeryLazy",
       init = function()
-        -- Disable vim-visual-multi's Ctrl+Up/Down mappings
+        -- Map vim-visual-multi to Tab+Arrow keys
         vim.g.VM_maps = {
-          ["Add Cursor Down"] = "",  -- Disable Ctrl+Down for adding cursors
-          ["Add Cursor Up"] = "",    -- Disable Ctrl+Up for adding cursors
+          ["Add Cursor Down"] = "<Tab><Down>",  -- Tab then Down for adding cursor down
+          ["Add Cursor Up"] = "<Tab><Up>",      -- Tab then Up for adding cursor up
         }
       end,
     },

@@ -63,28 +63,112 @@ end, { desc = "Pick Colorscheme (live preview)" })
 vim.cmd.colorscheme("kanagawa")
 
 
--- Transparent background
-vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
-vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
-vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
-vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })
-vim.api.nvim_set_hl(0, "LineNr", { bg = "none" })
-vim.api.nvim_set_hl(0, "CursorLineNr", { bg = "none" })
-vim.api.nvim_set_hl(0, "FoldColumn", { bg = "none" })
+-- Transparent background — re-applied on EVERY colorscheme change so themery /
+-- the live <leader>cs picker / any :colorscheme don't wipe the transparency.
+local function apply_transparency()
+  for _, group in ipairs({
+    "Normal", "NormalNC", "NormalFloat", "SignColumn",
+    "EndOfBuffer", "LineNr", "CursorLineNr", "FoldColumn",
+  }) do
+    vim.api.nvim_set_hl(0, group, { bg = "none" })
+  end
+end
+vim.api.nvim_create_autocmd("ColorScheme", { callback = apply_transparency })
+apply_transparency()
 
 
 -- LSP utility commands
+-- Override the built-in LspRestart to handle null-ls properly
 vim.api.nvim_create_user_command("LspRestart", function()
-  vim.cmd("LspStop")
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+
+  if #clients == 0 then
+    print("No LSP clients attached to this buffer")
+    return
+  end
+
+  local restarted = {}
+  for _, client in ipairs(clients) do
+    -- Skip null-ls/none-ls as it's managed differently
+    if client.name ~= "null-ls" then
+      vim.lsp.stop_client(client.id, true)
+      table.insert(restarted, client.name)
+    end
+  end
+
+  if #restarted > 0 then
+    vim.defer_fn(function()
+      vim.cmd("edit") -- Reload buffer to trigger LSP
+      print("Restarted: " .. table.concat(restarted, ", "))
+    end, 100)
+  else
+    print("No LSP servers to restart (only null-ls attached)")
+  end
+end, { desc = "Restart LSP for current buffer", force = true })
+
+-- Alternative command that doesn't use LspStop
+vim.api.nvim_create_user_command("LspRestartAll", function()
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+
+  for _, client in ipairs(clients) do
+    vim.lsp.stop_client(client.id, true)
+  end
+
   vim.defer_fn(function()
-    vim.cmd("edit") -- Reload buffer to trigger LSP
-  end, 100)
-end, { desc = "Restart LSP for current buffer" })
+    vim.cmd("edit")
+    print("All LSP clients restarted")
+  end, 200)
+end, { desc = "Restart all LSP clients (including null-ls)" })
 
 vim.api.nvim_create_user_command("LspLog", function()
   vim.cmd("edit " .. vim.lsp.get_log_path())
 end, { desc = "Open LSP log file" })
+
+-- Comprehensive buffer recovery command
+vim.api.nvim_create_user_command("FixBuffer", function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+
+  print("Fixing buffer...")
+
+  -- 1. Stop all LSP clients for this buffer (except null-ls)
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
+  for _, client in ipairs(clients) do
+    if client.name ~= "null-ls" then
+      vim.lsp.stop_client(client.id)
+    end
+  end
+
+  -- 2. Disable and re-enable treesitter
+  vim.cmd("TSBufDisable highlight")
+
+  -- 3. Clear completion state
+  local has_cmp, cmp = pcall(require, "cmp")
+  if has_cmp then
+    cmp.setup.buffer({ enabled = false })
+  end
+
+  -- 4. Reload the buffer
+  vim.defer_fn(function()
+    vim.cmd("edit!")
+
+    -- 5. Re-enable treesitter
+    vim.cmd("TSBufEnable highlight")
+
+    -- 6. Re-enable completion
+    if has_cmp then
+      cmp.setup.buffer({ enabled = true })
+    end
+
+    -- 7. Force syntax sync
+    vim.cmd("syntax sync fromstart")
+
+    -- Restore cursor position
+    pcall(vim.api.nvim_win_set_cursor, 0, cursor_pos)
+
+    print("Buffer fixed! LSP and treesitter restarted.")
+  end, 200)
+end, { desc = "Fix broken buffer (restart LSP, treesitter, completion)" })
 
 -- Show absolute line numbers
 vim.opt.number = true
@@ -155,21 +239,30 @@ vim.o.shiftwidth = 2
 -- Use `shiftwidth` when pressing tab in insert mode
 vim.o.softtabstop = 2
 
--- Error popup on hover
+-- Error popup on hover (CursorHold). Guarded so it does NOT re-fire/flicker every
+-- 500ms: skip if a floating window is already open, and only show diagnostics for
+-- the symbol under the cursor (scope = "cursor").
 vim.o.updatetime = 500
-vim.cmd [[autocmd CursorHold * lua vim.diagnostic.open_float(nil, {focus=false})]]
+vim.api.nvim_create_autocmd("CursorHold", {
+  callback = function()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_get_config(win).relative ~= "" then
+        return -- a float is already open; don't stack / flicker
+      end
+    end
+    vim.diagnostic.open_float(nil, { focus = false, scope = "cursor" })
+  end,
+})
 
--- Normal mode: Alt+Down moves current line down
-vim.keymap.set("n", "<A-Down>", ":m .+1<CR>==", { noremap = true, silent = true })
--- Normal mode: Alt+Up moves current line up
-vim.keymap.set("n", "<A-Up>", ":m .-2<CR>==", { noremap = true, silent = true })
-
--- Insert mode: Alt+Down moves current line down
-vim.keymap.set("i", "<A-Down>", "<Esc>:m .+1<CR>==gi", { noremap = true, silent = true })
--- Insert mode: Alt+Up moves current line up
-vim.keymap.set("i", "<A-Up>", "<Esc>:m .-2<CR>==gi", { noremap = true, silent = true })
-
--- Visual mode: Alt+Down moves selection down
-vim.keymap.set("v", "<A-Down>", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
--- Visual mode: Alt+Up moves selection up
-vim.keymap.set("v", "<A-Up>", ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
+-- Move lines / selections up & down with Alt+Up/Down, re-indenting after the move.
+-- Canonical `:m` (:move) mappings:
+--   * `==` / `gv=gv` re-indent via the active indentexpr (fixes wrong indent after a move)
+--   * visual mode uses the '< / '> marks (`:` auto-inserts '<,'>), so the cursor no
+--     longer jumps to a random spot — the old custom version read stale marks
+--   * no forced `redraw` and no stopinsert/startinsert bounce -> no stutter
+vim.keymap.set("n", "<A-Down>", ":m .+1<CR>==", { silent = true, desc = "Move line down" })
+vim.keymap.set("n", "<A-Up>", ":m .-2<CR>==", { silent = true, desc = "Move line up" })
+vim.keymap.set("i", "<A-Down>", "<Esc>:m .+1<CR>==gi", { silent = true, desc = "Move line down" })
+vim.keymap.set("i", "<A-Up>", "<Esc>:m .-2<CR>==gi", { silent = true, desc = "Move line up" })
+vim.keymap.set("v", "<A-Down>", ":m '>+1<CR>gv=gv", { silent = true, desc = "Move selection down" })
+vim.keymap.set("v", "<A-Up>", ":m '<-2<CR>gv=gv", { silent = true, desc = "Move selection up" })

@@ -96,6 +96,10 @@ lspconfig.ts_ls.setup({
 lspconfig.eslint.setup({
   capabilities = capabilities,
   on_attach = on_attach,
+  -- Lint on SAVE, not on every keystroke/line-move/undo. ESLint on a Next.js project
+  -- is heavy (loads the flat config + typescript-eslint); onType re-lints the whole
+  -- project on each change -> the CPU/RAM spike during move+undo storms. (2026-06-18)
+  settings = { run = "onSave" },
   root_dir = util.root_pattern(
     ".eslintrc",
     ".eslintrc.js",
