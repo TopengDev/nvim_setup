@@ -1,1 +1,5 @@
 state/*
+
+# Backup artifacts (e.g. lazy-lock.json.bak-telescope)
+*.bak
+*.bak-*
