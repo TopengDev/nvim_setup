@@ -221,8 +221,9 @@ require("lazy").setup({
     -- Syntax highlighting
     {
       "nvim-treesitter/nvim-treesitter",
+      branch = "main",
       build = ":TSUpdate",
-      event = {"BufReadPost", "BufNewFile"},
+      lazy = false,
       dependencies = {
         "nvim-treesitter/nvim-treesitter-textobjects",
       },
@@ -468,6 +469,7 @@ require("lazy").setup({
     },
     {
       "nvim-treesitter/nvim-treesitter-textobjects",
+      branch = "main",
       lazy = true,
       config = function()
         require("config.treesitter-textobjects")

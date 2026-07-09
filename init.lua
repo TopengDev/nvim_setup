@@ -120,8 +120,8 @@ vim.api.nvim_create_user_command("FixBuffer", function()
     end
   end
 
-  -- 2. Disable and re-enable treesitter
-  vim.cmd("TSBufDisable highlight")
+  -- 2. Stop native treesitter highlighting for this buffer
+  pcall(vim.treesitter.stop, bufnr)
 
   -- 3. Clear completion state
   local has_cmp, cmp = pcall(require, "cmp")
@@ -133,8 +133,8 @@ vim.api.nvim_create_user_command("FixBuffer", function()
   vim.defer_fn(function()
     vim.cmd("edit!")
 
-    -- 5. Re-enable treesitter
-    vim.cmd("TSBufEnable highlight")
+    -- 5. Restart native treesitter highlighting
+    pcall(vim.treesitter.start, bufnr)
 
     -- 6. Re-enable completion
     if has_cmp then

@@ -1,82 +1,54 @@
-require("nvim-treesitter.configs").setup({
-  ensure_installed = {
-    "typescript", "tsx", "javascript", "html", "css", "lua", "go", "php", "python",
-    "java", "c", "cpp", "solidity", "json", "yaml", "toml", "markdown", "bash",
-    "dockerfile", "vim", "vimdoc", "regex"
-  },
-  highlight = {
-    -- Re-enabled 2026-06-18: nvim pinned to 0.11.x (user-local ~/.local/bin/nvim), which IS
-    -- compatible with nvim-treesitter `master`. (master was archived 2025-05-24 and crashes on
-    -- nvim 0.12 with "attempt to call method 'range' (nil)". Only migrate to the `main` branch
-    -- if/when moving back to 0.12.)
-    enable = true,
-    -- Enable vim regex highlighting as fallback when treesitter parser is not available
-    additional_vim_regex_highlighting = { "markdown" },
-  },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn",
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    },
-  },
-  indent = {
-    -- Disabled 2026-06-18: the archived `master` treesitter indent has known gaps on
-    -- JSX/TSX (returns 0 on some nodes -> new lines land at column 0 on <CR> / ==).
-    -- Falling back to the bundled filetype indent (GetTypescriptIndent), which is
-    -- uniform for TS/JS/JSX. autoindent stays on as the baseline.
-    enable = false,
-  },
-  -- Performance optimizations
-  auto_install = true,
-  sync_install = false, -- Install parsers asynchronously
+-- nvim-treesitter main branch config (Neovim 0.12+)
+-- Native vim.treesitter highlighting replaces the old configs.setup() highlight module.
+-- incremental_selection dropped: no main-branch equivalent and the minimal reimplementation
+-- via vim.treesitter.get_node() is non-trivial with multi-byte edge cases. Known delta vs master.
+
+require("nvim-treesitter").setup({})
+
+-- Install / ensure parsers present (async; safe to call on every startup - skips already-installed)
+require("nvim-treesitter").install({
+  "typescript", "tsx", "javascript", "html", "css", "lua", "go", "php", "python",
+  "java", "c", "cpp", "solidity", "json", "yaml", "toml", "markdown", "markdown_inline",
+  "bash", "dockerfile", "vim", "vimdoc", "regex", "query",
 })
 
--- Enable treesitter-based folding after buffer is loaded
-vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+-- Explicit filetype -> parser registrations for cases where nvim filetype name differs.
+-- nvim-treesitter main registers these on install, but explicit registration is defensive.
+vim.treesitter.language.register("tsx", "typescriptreact")
+vim.treesitter.language.register("bash", "sh")
+
+-- Enable native highlighting + folding per FileType.
+-- pcall(vim.treesitter.start) silently skips filetypes with no installed parser.
+-- Folding is only applied when highlighting successfully attached.
+vim.api.nvim_create_autocmd("FileType", {
   pattern = "*",
   callback = function()
-    -- Check if treesitter parser exists for this buffer
-    local has_parser = pcall(vim.treesitter.get_parser, 0)
-    if has_parser then
-      vim.wo.foldmethod = "expr"
-      vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-      vim.wo.foldlevel = 99
-      vim.wo.foldenable = true
+    local ok = pcall(vim.treesitter.start)
+    if ok then
+      local buf = vim.api.nvim_get_current_buf()
+      if vim.treesitter.highlighter.active[buf] then
+        vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+        vim.wo.foldmethod = "expr"
+        vim.wo.foldlevel = 99
+        vim.wo.foldenable = true
+      end
     end
   end,
 })
 
-require('nvim-ts-autotag').setup({
+-- nvim-ts-autotag works against vim.treesitter directly on main branch.
+require("nvim-ts-autotag").setup({
   opts = {
-    -- Defaults
-    enable_close = true, -- Auto close tags
-    enable_rename = true, -- Auto rename pairs of tags
-    enable_close_on_slash = true -- Auto close on trailing </
+    enable_close = true,
+    enable_rename = true,
+    enable_close_on_slash = true,
   },
-  -- Also override individual filetype configs, these take priority.
-  -- Empty by default, useful if one of the "opts" global settings
-  -- doesn't work well in a specific filetype
   per_filetype = {
-    ["html"] = {
-      enable_close = true
-    },
-    ["typescript"] = {
-      enable_close = true
-    },
-    ["typescriptreact"] = {
-      enable_close = true
-    },
-    ["tsx"] = {
-      enable_close = true
-    },
-    ["javascript"] = {
-      enable_close = true
-    },
-    ["javascriptreact"] = {
-      enable_close = true
-    }
-  }
+    ["html"] = { enable_close = true },
+    ["typescript"] = { enable_close = true },
+    ["typescriptreact"] = { enable_close = true },
+    ["tsx"] = { enable_close = true },
+    ["javascript"] = { enable_close = true },
+    ["javascriptreact"] = { enable_close = true },
+  },
 })
